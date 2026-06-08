@@ -169,7 +169,11 @@ body{font-family:'Nunito',sans-serif;background:#FFF8E7;min-height:100vh;color:#
   <video id="videoEl" autoplay playsinline></video>
   <canvas id="canvasEl"></canvas>
   <div class="cam-bottom">
-    <div class="type-badge-pill" id="camBadge"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+      <button class="btn-sm" onclick="goTo('typeSelect')" style="font-size:13px">← 타입 바꾸기</button>
+      <div class="type-badge-pill" id="camBadge"></div>
+      <div style="width:80px"></div>
+    </div>
     <div id="liveCtrl" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px">
       <div class="shutter-row">
         <button class="btn-sm" onclick="flipCam()">🔄 전환</button>
