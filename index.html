@@ -166,28 +166,26 @@ body{font-family:'Nunito',sans-serif;background:#FFF8E7;min-height:100vh;color:#
 
 <!-- CAMERA -->
 <div class="screen" id="cameraScreen">
-  <video id="videoEl" autoplay playsinline></video>
-  <canvas id="canvasEl"></canvas>
-  <div class="cam-bottom">
+  <div class="cam-bottom" style="justify-content:center;min-height:100vh">
     <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
       <button class="btn-sm" onclick="goTo('typeSelect')" style="font-size:13px">← 타입 바꾸기</button>
       <div class="type-badge-pill" id="camBadge"></div>
       <div style="width:80px"></div>
     </div>
-    <div id="liveCtrl" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px">
-      <div class="shutter-row">
-        <button class="btn-sm" onclick="flipCam()">🔄 전환</button>
-        <button class="shutter-btn" onclick="shoot()"><div class="shutter-inner"></div></button>
-        <button class="btn-sm" onclick="openFile()">📁 파일</button>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;width:100%">
+      <div id="photoPlaceholder" style="width:220px;height:220px;border-radius:24px;background:#f0ece4;border:2.5px dashed #ddd;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#bbb">
+        <span style="font-size:48px">📷</span>
+        <span style="font-size:13px;font-weight:700">사진을 골라주세요</span>
       </div>
+      <img id="previewImg" alt="선택한 사진" style="width:220px;height:220px;border-radius:24px;object-fit:cover;display:none;border:3px solid white;box-shadow:0 4px 16px rgba(0,0,0,0.12)"/>
+      <button onclick="openFile()" style="background:#FF5B5B;color:white;border:none;padding:16px 40px;border-radius:50px;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 4px 0 #d94040;width:100%;max-width:280px">📷 카메라 / 사진 고르기</button>
     </div>
-    <img id="previewImg" alt="촬영 사진"/>
     <div class="cam-action-row">
-      <button class="btn-retake" id="btnRetake" onclick="retake()">다시 찍기</button>
+      <button class="btn-retake" id="btnRetake" onclick="retake()">다시 고르기</button>
       <button class="btn-use"    id="btnUse"    onclick="goTo('nameScreen')">이 사진 사용 ✓</button>
     </div>
   </div>
-  <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(event)">
+  <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none" onchange="handleFile(event)">
 </div>
 
 <!-- NAME -->
@@ -230,14 +228,15 @@ body{font-family:'Nunito',sans-serif;background:#FFF8E7;min-height:100vh;color:#
 <script>
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 
-let selType=null,captured=null,stream=null,facing='environment';
+let selType=null,captured=null;
 let pokemons=JSON.parse(localStorage.getItem('doam_v1')||'[]');
 
 function goTo(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if(id==='cameraScreen') startCam();
-  else stopCam();
+  if(id==='cameraScreen'){
+    setBadge('camBadge',selType);
+  }
   if(id==='nameScreen'){
     document.getElementById('namePreviewImg').src=captured;
     setBadge('nameBadge',selType);
@@ -262,53 +261,27 @@ function setBadge(id,type){
   el.style.background=type.color;
 }
 
-async function startCam(){
-  stopCam();
-  try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing},audio:false});
-    const v=document.getElementById('videoEl');
-    v.srcObject=stream;v.style.display='block';
-    document.getElementById('liveCtrl').style.display='flex';
-    document.getElementById('previewImg').style.display='none';
-    document.getElementById('btnRetake').style.display='none';
-    document.getElementById('btnUse').style.display='none';
-    setBadge('camBadge',selType);
-  }catch(e){
-    document.getElementById('videoEl').style.display='none';
-    document.getElementById('liveCtrl').innerHTML='<p style="color:#999;text-align:center;font-size:14px;font-weight:700;padding:10px">카메라를 사용할 수 없어요.<br>아래 파일 버튼을 눌러주세요!</p><button class="btn-sm" onclick="openFile()" style="margin:0 auto">📁 파일에서 고르기</button>';
-  }
-}
-function stopCam(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}}
-function flipCam(){facing=facing==='environment'?'user':'environment';startCam();}
-function shoot(){
-  const v=document.getElementById('videoEl'),c=document.getElementById('canvasEl');
-  c.width=v.videoWidth;c.height=v.videoHeight;
-  c.getContext('2d').drawImage(v,0,0);
-  captured=c.toDataURL('image/jpeg',0.85);
-  showPreview();
-}
-function showPreview(){
-  document.getElementById('previewImg').src=captured;
-  document.getElementById('previewImg').style.display='block';
-  document.getElementById('videoEl').style.display='none';
-  document.getElementById('liveCtrl').style.display='none';
-  document.getElementById('btnRetake').style.display='block';
-  document.getElementById('btnUse').style.display='block';
-  stopCam();
-}
-function retake(){
-  captured=null;
-  document.getElementById('previewImg').style.display='none';
-  document.getElementById('btnRetake').style.display='none';
-  document.getElementById('btnUse').style.display='none';
-  startCam();
-}
 function openFile(){document.getElementById('fileInput').click();}
 function handleFile(e){
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
   r.onload=ev=>{captured=ev.target.result;showPreview();};
   r.readAsDataURL(f);
+}
+function showPreview(){
+  document.getElementById('previewImg').src=captured;
+  document.getElementById('previewImg').style.display='block';
+  document.getElementById('photoPlaceholder').style.display='none';
+  document.getElementById('btnRetake').style.display='block';
+  document.getElementById('btnUse').style.display='block';
+}
+function retake(){
+  captured=null;
+  document.getElementById('previewImg').style.display='none';
+  document.getElementById('photoPlaceholder').style.display='flex';
+  document.getElementById('btnRetake').style.display='none';
+  document.getElementById('btnUse').style.display='none';
+  document.getElementById('fileInput').value='';
 }
 function checkName(){
   const v=document.getElementById('nameInput').value.trim();
@@ -317,13 +290,31 @@ function checkName(){
 function register(){
   const name=document.getElementById('nameInput').value.trim();
   if(!name||!captured||!selType)return;
+  const btn=document.getElementById('btnReg');
+  btn.classList.remove('on');
+  btn.textContent='등록 중...';
+  btn.style.pointerEvents='none';
   const num=pokemons.length+1;
   pokemons.push({id:Date.now(),name,type:selType,image:captured,number:num});
   localStorage.setItem('doam_v1',JSON.stringify(pokemons));
-  document.getElementById('successImg').src=captured;
-  document.getElementById('successName').textContent=name;
+  // 완료 팝업
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
+  overlay.innerHTML=`<div style="background:white;border-radius:28px;padding:36px 28px;text-align:center;width:280px;box-shadow:0 8px 40px rgba(0,0,0,0.2)">
+    <div style="font-size:56px;margin-bottom:12px">🎉</div>
+    <div style="font-size:22px;font-weight:900;color:#2d2d2d;margin-bottom:8px">등록 완료!</div>
+    <div style="font-size:15px;color:#888;font-weight:700;margin-bottom:24px"><span style="color:#FF5B5B;font-weight:900">${name}</span> 이(가)<br>도감에 등록됐어요!</div>
+    <button onclick="this.closest('div[style]').parentNode.remove();goSuccessScreen(${num})" style="background:#FF5B5B;color:white;border:none;padding:14px 0;border-radius:50px;font-size:17px;font-weight:900;cursor:pointer;width:100%;box-shadow:0 4px 0 #d94040">확인</button>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+function goSuccessScreen(num){
+  const p=pokemons.find(p=>p.number===num);
+  if(!p)return;
+  document.getElementById('successImg').src=p.image;
+  document.getElementById('successName').textContent=p.name;
   document.getElementById('successNum').textContent='No.'+String(num).padStart(3,'0');
-  setBadge('successBadge',selType);
+  setBadge('successBadge',p.type);
   goTo('successScreen');
 }
 function makeAnother(){
@@ -332,7 +323,12 @@ function makeAnother(){
   document.getElementById('btnNext').classList.remove('on');
   goTo('typeSelect');
 }
-function renderDoam(){
+function deletePokemon(id){
+  if(!confirm('이 포켓몬을 도감에서 삭제할까요?')) return;
+  pokemons=pokemons.filter(p=>p.id!==id);
+  localStorage.setItem('doam_v1',JSON.stringify(pokemons));
+  renderDoam();
+}
   const grid=document.getElementById('doamGrid');
   document.getElementById('doamCount').textContent=pokemons.length+'마리';
   if(!pokemons.length){
@@ -341,7 +337,10 @@ function renderDoam(){
   }
   grid.innerHTML=pokemons.map(p=>`
     <div class="doam-card">
-      <img src="${p.image}" alt="${p.name}"/>
+      <div style="position:relative">
+        <img src="${p.image}" alt="${p.name}" style="width:100%;aspect-ratio:1;object-fit:cover"/>
+        <button onclick="deletePokemon(${p.id})" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.5);border:none;color:white;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+      </div>
       <div class="doam-info">
         <div class="doam-num">No.${String(p.number).padStart(3,'0')}</div>
         <div class="doam-name">${p.name}</div>
