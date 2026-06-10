@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#FFF8E7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="나만의 도감">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>나만의 도감</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Nunito',sans-serif;background:#FFF8E7;min-height:100vh;color:#2d2d2d;overflow-x:hidden}
+.screen{display:none;min-height:100vh;padding:24px 20px;flex-direction:column;align-items:center}
+.screen.active{display:flex}
+
+/* HOME */
+#home{background:linear-gradient(160deg,#FFF8E7 0%,#FFF0C8 60%,#FFE49A 100%);justify-content:center;gap:0}
+.home-top{text-align:center;margin-bottom:36px}
+.pokeball-wrap{width:110px;height:110px;margin:0 auto 20px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.home-title{font-size:36px;font-weight:900;color:#2d2d2d;letter-spacing:-1px}
+.home-sub{font-size:14px;color:#888;margin-top:6px;font-weight:700}
+.btn-primary{background:#FF5B5B;color:white;border:none;padding:18px 0;border-radius:50px;font-size:19px;font-weight:900;cursor:pointer;width:100%;max-width:300px;transition:all 0.15s;box-shadow:0 4px 0 #d94040;letter-spacing:0.3px}
+.btn-primary:active{transform:translateY(2px);box-shadow:0 2px 0 #d94040}
+.btn-secondary{background:white;color:#555;border:2px solid #e8e8e8;padding:15px 0;border-radius:50px;font-size:16px;font-weight:800;cursor:pointer;width:100%;max-width:300px;margin-top:12px;transition:all 0.15s}
+.btn-secondary:active{background:#f5f5f5}
+
+/* TYPE SELECT */
+#typeSelect{background:#FFF8E7;padding-top:20px}
+.screen-header{display:flex;align-items:center;gap:12px;width:100%;margin-bottom:20px}
+.btn-back-sm{background:white;border:1.5px solid #e0e0e0;width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.screen-title{font-size:20px;font-weight:900;color:#2d2d2d}
+.screen-sub{font-size:13px;color:#999;margin-bottom:18px;font-weight:700}
+.type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:380px}
+.type-card{border-radius:16px;padding:14px 6px 12px;text-align:center;cursor:pointer;border:3px solid transparent;transition:all 0.15s;position:relative}
+.type-card:active{transform:scale(0.92)}
+.type-card.selected{border-color:white;transform:scale(1.05);box-shadow:0 4px 16px rgba(0,0,0,0.18)}
+.type-emoji{font-size:28px;margin-bottom:6px;display:block}
+.type-name{font-size:13px;font-weight:900;color:white;text-shadow:0 1px 3px rgba(0,0,0,0.25)}
+
+/* type colors */
+.t-fire{background:#FF7043}.t-water{background:#29B6F6}.t-grass{background:#66BB6A}
+.t-electric{background:#FFCA28}.t-electric .type-name{color:#5d4000}
+.t-ice{background:#80DEEA}.t-ice .type-name{color:#004d5e}
+.t-poison{background:#AB47BC}.t-ground{background:#D4A054}.t-flying{background:#90A4E8}
+.t-bug{background:#9CCC65}.t-bug .type-name{color:#2e4a00}
+.t-rock{background:#BDBDBD}.t-rock .type-name{color:#333}
+.t-ghost{background:#7E57C2}.t-dragon{background:#5C6BC0}
+.t-dark{background:#616161}.t-steel{background:#B0BEC5}.t-steel .type-name{color:#263238}
+.t-fairy{background:#F48FB1}.t-fighting{background:#EF5350}
+
+.btn-next{background:#FF5B5B;color:white;border:none;padding:16px 0;border-radius:50px;font-size:17px;font-weight:900;cursor:pointer;width:100%;max-width:380px;margin-top:18px;opacity:0.35;pointer-events:none;transition:all 0.2s;box-shadow:0 4px 0 #d94040}
+.btn-next.on{opacity:1;pointer-events:all}
+.btn-next:active{transform:translateY(2px);box-shadow:0 2px 0 #d94040}
+
+/* CAMERA */
+#cameraScreen{background:#111;padding:0;justify-content:flex-start}
+#videoEl{width:100%;max-height:62vh;object-fit:cover;display:block}
+#canvasEl{display:none}
+.cam-bottom{background:#FFF8E7;padding:18px 20px;width:100%;flex:1;display:flex;flex-direction:column;align-items:center;gap:12px}
+.type-badge-pill{padding:7px 18px;border-radius:50px;font-size:13px;font-weight:900;color:white;text-shadow:0 1px 2px rgba(0,0,0,0.2)}
+.shutter-row{display:flex;align-items:center;justify-content:center;gap:28px;width:100%}
+.shutter-btn{width:70px;height:70px;border-radius:50%;background:white;border:5px solid #ddd;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.15);transition:all 0.15s}
+.shutter-btn:active{transform:scale(0.88)}
+.shutter-inner{width:52px;height:52px;border-radius:50%;background:#FF5B5B}
+.btn-sm{background:white;border:1.5px solid #e0e0e0;padding:10px 18px;border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;color:#555}
+#previewImg{width:100%;border-radius:16px;display:none;max-height:52vh;object-fit:cover}
+.cam-action-row{display:flex;gap:10px;width:100%}
+.btn-retake{flex:1;background:white;border:1.5px solid #e0e0e0;padding:14px;border-radius:50px;font-size:15px;font-weight:800;cursor:pointer;color:#555;display:none}
+.btn-use{flex:1;background:#FF5B5B;color:white;border:none;padding:14px;border-radius:50px;font-size:15px;font-weight:900;cursor:pointer;display:none;box-shadow:0 3px 0 #d94040}
+.btn-use:active{transform:translateY(1px);box-shadow:0 2px 0 #d94040}
+
+/* NAME */
+#nameScreen{background:linear-gradient(160deg,#FFF8E7,#FFE8E8);justify-content:flex-start;padding-top:20px}
+#namePreviewImg{width:150px;height:150px;border-radius:24px;object-fit:cover;border:4px solid white;box-shadow:0 4px 20px rgba(0,0,0,0.12);margin:16px 0 12px}
+.name-input{width:100%;max-width:300px;background:white;border:2.5px solid #e0e0e0;border-radius:18px;padding:16px 20px;font-size:22px;font-weight:900;color:#2d2d2d;text-align:center;outline:none;font-family:'Nunito',sans-serif;margin-top:14px}
+.name-input:focus{border-color:#FF5B5B}
+.name-input::placeholder{color:#ccc}
+.name-hint{font-size:12px;color:#bbb;margin-top:8px;font-weight:700}
+.btn-register{background:#FF5B5B;color:white;border:none;padding:16px 0;border-radius:50px;font-size:17px;font-weight:900;cursor:pointer;width:100%;max-width:300px;margin-top:18px;opacity:0.35;pointer-events:none;transition:all 0.2s;box-shadow:0 4px 0 #d94040}
+.btn-register.on{opacity:1;pointer-events:all}
+.btn-register:active{transform:translateY(2px);box-shadow:0 2px 0 #d94040}
+
+/* SUCCESS */
+#successScreen{background:linear-gradient(160deg,#FFF8E7,#FFF0C8);justify-content:center}
+.success-card{background:white;border-radius:28px;padding:28px 22px;text-align:center;width:100%;max-width:300px;box-shadow:0 8px 30px rgba(0,0,0,0.08)}
+.success-img{width:170px;height:170px;border-radius:20px;object-fit:cover;margin:0 auto 14px;display:block}
+.success-num{font-size:12px;color:#bbb;font-weight:800;letter-spacing:2px;margin-bottom:4px}
+.success-name{font-size:28px;font-weight:900;color:#2d2d2d;margin-bottom:10px}
+.sparkle{font-size:36px;animation:spin 3s linear infinite;display:inline-block;margin-bottom:14px}
+@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+.success-msg{font-size:13px;color:#aaa;margin-top:14px;font-weight:700}
+.btn-another{background:#FF5B5B;color:white;border:none;padding:15px 0;border-radius:50px;font-size:16px;font-weight:900;cursor:pointer;width:100%;margin-top:18px;box-shadow:0 3px 0 #d94040}
+.btn-another:active{transform:translateY(1px);box-shadow:0 2px 0 #d94040}
+.btn-doam-link{background:transparent;color:#aaa;border:1.5px solid #e8e8e8;padding:12px 0;border-radius:50px;font-size:14px;font-weight:800;cursor:pointer;width:100%;margin-top:10px}
+
+/* DOAM */
+#doamScreen{background:#FFF8E7;align-items:flex-start;padding-top:20px}
+.doam-header{display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:18px}
+.doam-header h2{font-size:20px;font-weight:900;color:#2d2d2d}
+.doam-count-badge{background:#FF5B5B;color:white;font-size:12px;font-weight:900;padding:4px 12px;border-radius:50px}
+.doam-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%}
+.doam-card{background:white;border-radius:20px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.07)}
+.doam-card img{width:100%;aspect-ratio:1;object-fit:cover}
+.doam-info{padding:10px 12px 12px}
+.doam-num{font-size:10px;color:#bbb;font-weight:800;letter-spacing:1.5px}
+.doam-name{font-size:15px;font-weight:900;color:#2d2d2d;margin-top:2px}
+.doam-type-pill{display:inline-block;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:900;color:white;margin-top:6px;text-shadow:0 1px 2px rgba(0,0,0,0.2)}
+.empty-state{text-align:center;padding:60px 20px;width:100%;color:#ccc;grid-column:1/-1}
+.empty-state .empty-icon{font-size:52px;margin-bottom:14px}
+.empty-state p{font-size:15px;font-weight:700;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="screen active" id="home">
+  <div class="home-top">
+    <div class="pokeball-wrap">
+      <svg viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="55" cy="55" r="52" fill="white" stroke="#eee" stroke-width="2"/>
+        <path d="M3 55 A52 52 0 0 1 107 55" fill="#FF5B5B"/>
+        <rect x="3" y="52" width="104" height="6" fill="#333" rx="3"/>
+        <circle cx="55" cy="55" r="14" fill="white" stroke="#333" stroke-width="5"/>
+        <circle cx="55" cy="55" r="7" fill="white" stroke="#eee" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="home-title">나만의 도감</div>
+    <div class="home-sub">내가 만든 포켓몬을 모아봐요!</div>
+  </div>
+  <button class="btn-primary" onclick="goTo('typeSelect')">✨ 포켓몬 만들기</button>
+  <button class="btn-secondary" onclick="goTo('doamScreen')">📖 도감 보기</button>
+</div>
+
+<!-- TYPE SELECT -->
+<div class="screen" id="typeSelect">
+  <div class="screen-header">
+    <button class="btn-back-sm" onclick="goTo('home')">←</button>
+    <span class="screen-title">속성을 골라봐요!</span>
+  </div>
+  <p class="screen-sub">내 포켓몬은 어떤 타입인가요?</p>
+  <div class="type-grid">
+    <div class="type-card t-fire"      onclick="pick(this,'불꽃','🔥','#FF7043')"><span class="type-emoji">🔥</span><div class="type-name">불꽃</div></div>
+    <div class="type-card t-water"     onclick="pick(this,'물','💧','#29B6F6')"><span class="type-emoji">💧</span><div class="type-name">물</div></div>
+    <div class="type-card t-grass"     onclick="pick(this,'풀','🌿','#66BB6A')"><span class="type-emoji">🌿</span><div class="type-name">풀</div></div>
+    <div class="type-card t-electric"  onclick="pick(this,'전기','⚡','#FFCA28')"><span class="type-emoji">⚡</span><div class="type-name" style="color:#5d4000">전기</div></div>
+    <div class="type-card t-ice"       onclick="pick(this,'얼음','❄️','#80DEEA')"><span class="type-emoji">❄️</span><div class="type-name" style="color:#004d5e">얼음</div></div>
+    <div class="type-card t-poison"    onclick="pick(this,'독','☠️','#AB47BC')"><span class="type-emoji">☠️</span><div class="type-name">독</div></div>
+    <div class="type-card t-ground"    onclick="pick(this,'땅','🏔️','#D4A054')"><span class="type-emoji">🏔️</span><div class="type-name">땅</div></div>
+    <div class="type-card t-flying"    onclick="pick(this,'비행','🌬️','#90A4E8')"><span class="type-emoji">🌬️</span><div class="type-name">비행</div></div>
+    <div class="type-card t-bug"       onclick="pick(this,'벌레','🐛','#9CCC65')"><span class="type-emoji">🐛</span><div class="type-name" style="color:#2e4a00">벌레</div></div>
+    <div class="type-card t-rock"      onclick="pick(this,'바위','🪨','#BDBDBD')"><span class="type-emoji">🪨</span><div class="type-name" style="color:#333">바위</div></div>
+    <div class="type-card t-ghost"     onclick="pick(this,'고스트','👻','#7E57C2')"><span class="type-emoji">👻</span><div class="type-name">고스트</div></div>
+    <div class="type-card t-dragon"    onclick="pick(this,'드래곤','🐉','#5C6BC0')"><span class="type-emoji">🐉</span><div class="type-name">드래곤</div></div>
+    <div class="type-card t-dark"      onclick="pick(this,'악','🌑','#616161')"><span class="type-emoji">🌑</span><div class="type-name">악</div></div>
+    <div class="type-card t-steel"     onclick="pick(this,'강철','⚙️','#B0BEC5')"><span class="type-emoji">⚙️</span><div class="type-name" style="color:#263238">강철</div></div>
+    <div class="type-card t-fairy"     onclick="pick(this,'페어리','🌸','#F48FB1')"><span class="type-emoji">🌸</span><div class="type-name">페어리</div></div>
+    <div class="type-card t-fighting"  onclick="pick(this,'격투','👊','#EF5350')"><span class="type-emoji">👊</span><div class="type-name">격투</div></div>
+  </div>
+  <button class="btn-next" id="btnNext" onclick="goTo('cameraScreen')">📸 사진 찍으러 가기</button>
+</div>
+
+<!-- CAMERA -->
+<div class="screen" id="cameraScreen">
+  <div class="cam-bottom" style="justify-content:center;min-height:100vh">
+    <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+      <button class="btn-sm" onclick="goTo('typeSelect')" style="font-size:13px">← 타입 바꾸기</button>
+      <div class="type-badge-pill" id="camBadge"></div>
+      <div style="width:80px"></div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;width:100%">
+      <div id="photoPlaceholder" style="width:220px;height:220px;border-radius:24px;background:#f0ece4;border:2.5px dashed #ddd;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#bbb">
+        <span style="font-size:48px">📷</span>
+        <span style="font-size:13px;font-weight:700">사진을 골라주세요</span>
+      </div>
+      <img id="previewImg" alt="선택한 사진" style="width:220px;height:220px;border-radius:24px;object-fit:cover;display:none;border:3px solid white;box-shadow:0 4px 16px rgba(0,0,0,0.12)"/>
+      <button onclick="openFile()" style="background:#FF5B5B;color:white;border:none;padding:16px 40px;border-radius:50px;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 4px 0 #d94040;width:100%;max-width:280px">📷 카메라 / 사진 고르기</button>
+    </div>
+    <div class="cam-action-row">
+      <button class="btn-retake" id="btnRetake" onclick="retake()">다시 고르기</button>
+      <button class="btn-use"    id="btnUse"    onclick="goTo('nameScreen')">이 사진 사용 ✓</button>
+    </div>
+  </div>
+  <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none" onchange="handleFile(event)">
+</div>
+
+<!-- NAME -->
+<div class="screen" id="nameScreen">
+  <div class="screen-header">
+    <button class="btn-back-sm" onclick="goTo('cameraScreen')">←</button>
+    <span class="screen-title">이름을 지어줘요!</span>
+  </div>
+  <img id="namePreviewImg" alt="내 포켓몬"/>
+  <div class="type-badge-pill" id="nameBadge"></div>
+  <input class="name-input" id="nameInput" type="text" placeholder="이름을 써봐요" maxlength="10" oninput="checkName()"/>
+  <p class="name-hint">최대 10글자까지 쓸 수 있어요</p>
+  <button class="btn-register" id="btnReg" onclick="register()">도감에 등록하기 🎉</button>
+</div>
+
+<!-- SUCCESS -->
+<div class="screen" id="successScreen">
+  <div class="success-card">
+    <div class="sparkle">⭐</div>
+    <img id="successImg" class="success-img" alt="등록된 포켓몬"/>
+    <div class="success-num" id="successNum">No.001</div>
+    <div class="success-name" id="successName">이름</div>
+    <div class="type-badge-pill" id="successBadge"></div>
+    <p class="success-msg">도감에 등록됐어요!</p>
+    <button class="btn-another" onclick="makeAnother()">또 만들기 ✨</button>
+    <button class="btn-doam-link" onclick="goTo('doamScreen')">📖 도감 보기</button>
+  </div>
+</div>
+
+<!-- DOAM -->
+<div class="screen" id="doamScreen">
+  <div class="doam-header">
+    <button class="btn-back-sm" onclick="goTo('home')">←</button>
+    <h2>📖 우리 도감</h2>
+    <span class="doam-count-badge" id="doamCount">0마리</span>
+  </div>
+  <div class="doam-grid" id="doamGrid"></div>
+</div>
+
+<script>
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+
+let selType=null,captured=null;
+let pokemons=JSON.parse(localStorage.getItem('doam_v1')||'[]');
+
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='cameraScreen'){
+    setBadge('camBadge',selType);
+  }
+  if(id==='nameScreen'){
+    document.getElementById('namePreviewImg').src=captured;
+    setBadge('nameBadge',selType);
+    document.getElementById('nameInput').value='';
+    document.getElementById('btnReg').classList.remove('on');
+  }
+  if(id==='doamScreen') renderDoam();
+  window.scrollTo(0,0);
+}
+
+function pick(el,name,emoji,color){
+  document.querySelectorAll('.type-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  selType={name,emoji,color};
+  document.getElementById('btnNext').classList.add('on');
+}
+
+function setBadge(id,type){
+  if(!type)return;
+  const el=document.getElementById(id);
+  el.textContent=type.emoji+' '+type.name;
+  el.style.background=type.color;
+}
+
+function openFile(){document.getElementById('fileInput').click();}
+function handleFile(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{captured=ev.target.result;showPreview();};
+  r.readAsDataURL(f);
+}
+function showPreview(){
+  document.getElementById('previewImg').src=captured;
+  document.getElementById('previewImg').style.display='block';
+  document.getElementById('photoPlaceholder').style.display='none';
+  document.getElementById('btnRetake').style.display='block';
+  document.getElementById('btnUse').style.display='block';
+}
+function retake(){
+  captured=null;
+  document.getElementById('previewImg').style.display='none';
+  document.getElementById('photoPlaceholder').style.display='flex';
+  document.getElementById('btnRetake').style.display='none';
+  document.getElementById('btnUse').style.display='none';
+  document.getElementById('fileInput').value='';
+}
+function checkName(){
+  const v=document.getElementById('nameInput').value.trim();
+  document.getElementById('btnReg').classList.toggle('on',v.length>0);
+}
+function register(){
+  const name=document.getElementById('nameInput').value.trim();
+  if(!name||!captured||!selType)return;
+  const btn=document.getElementById('btnReg');
+  btn.classList.remove('on');
+  btn.textContent='등록 중...';
+  btn.style.pointerEvents='none';
+  const num=pokemons.length+1;
+  pokemons.push({id:Date.now(),name,type:selType,image:captured,number:num});
+  localStorage.setItem('doam_v1',JSON.stringify(pokemons));
+  // 완료 팝업
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
+  overlay.innerHTML=`<div style="background:white;border-radius:28px;padding:36px 28px;text-align:center;width:280px;box-shadow:0 8px 40px rgba(0,0,0,0.2)">
+    <div style="font-size:56px;margin-bottom:12px">🎉</div>
+    <div style="font-size:22px;font-weight:900;color:#2d2d2d;margin-bottom:8px">등록 완료!</div>
+    <div style="font-size:15px;color:#888;font-weight:700;margin-bottom:24px"><span style="color:#FF5B5B;font-weight:900">${name}</span> 이(가)<br>도감에 등록됐어요!</div>
+    <button onclick="this.closest('div[style]').parentNode.remove();goSuccessScreen(${num})" style="background:#FF5B5B;color:white;border:none;padding:14px 0;border-radius:50px;font-size:17px;font-weight:900;cursor:pointer;width:100%;box-shadow:0 4px 0 #d94040">확인</button>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+function goSuccessScreen(num){
+  const p=pokemons.find(p=>p.number===num);
+  if(!p)return;
+  document.getElementById('successImg').src=p.image;
+  document.getElementById('successName').textContent=p.name;
+  document.getElementById('successNum').textContent='No.'+String(num).padStart(3,'0');
+  setBadge('successBadge',p.type);
+  goTo('successScreen');
+}
+function makeAnother(){
+  captured=null;selType=null;
+  document.querySelectorAll('.type-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('btnNext').classList.remove('on');
+  goTo('typeSelect');
+}
+function deletePokemon(id){
+  if(!confirm('이 포켓몬을 도감에서 삭제할까요?')) return;
+  pokemons=pokemons.filter(p=>p.id!==id);
+  localStorage.setItem('doam_v1',JSON.stringify(pokemons));
+  renderDoam();
+}
+  const grid=document.getElementById('doamGrid');
+  document.getElementById('doamCount').textContent=pokemons.length+'마리';
+  if(!pokemons.length){
+    grid.innerHTML='<div class="empty-state"><div class="empty-icon">📭</div><p>아직 등록된 포켓몬이 없어요!<br>첫 번째 포켓몬을 만들어봐요 🌟</p></div>';
+    return;
+  }
+  grid.innerHTML=pokemons.map(p=>`
+    <div class="doam-card">
+      <div style="position:relative">
+        <img src="${p.image}" alt="${p.name}" style="width:100%;aspect-ratio:1;object-fit:cover"/>
+        <button onclick="deletePokemon(${p.id})" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.5);border:none;color:white;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+      </div>
+      <div class="doam-info">
+        <div class="doam-num">No.${String(p.number).padStart(3,'0')}</div>
+        <div class="doam-name">${p.name}</div>
+        <div class="doam-type-pill" style="background:${p.type.color}">${p.type.emoji} ${p.type.name}</div>
+      </div>
+    </div>`).join('');
+}
+</script>
+</body>
+</html>
